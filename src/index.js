@@ -1,6 +1,10 @@
+import fs from 'fs/promises';
+import path from 'path';
 import { fetchWithCache } from './fetch.js';
 import { extractBookLinks, getNextPageUrl, extractBookDetails } from './parse.js';
-import { BASE_URL, DELAY_MS } from './config.js';
+import { normalizeRecord } from './normalize.js';
+import { validateBook } from './validate.js';
+import { BASE_URL, DELAY_MS, OUTPUT_DIR } from './config.js';
 
 async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -48,7 +52,6 @@ async function main() {
       continue;
     }
     
-    // For simplicity, using base page as source_page.
     const sourcePage = `${BASE_URL}/catalogue/page-1.html`;
     const raw = extractBookDetails(html, url, sourcePage);
     rawRecords.push(raw);
@@ -57,9 +60,28 @@ async function main() {
   }
   
   console.log(`detail_pages=${rawRecords.length}`);
-  if (rawRecords.length > 0) {
-    console.log('Sample record:', JSON.stringify(rawRecords[0], null, 2));
+
+  // 3. Normalize and validate
+  const good = [];
+  const bad = [];
+  for (const raw of rawRecords) {
+    const normalized = normalizeRecord(raw);
+    const result = validateBook(normalized);
+    if (result.valid) {
+      good.push(result.data);
+    } else {
+      bad.push({ raw, errors: result.error });
+    }
   }
+
+  console.log(`Validation results: ${good.length} valid, ${bad.length} invalid.`);
+
+  // 4. Write outputs
+  await fs.mkdir(OUTPUT_DIR, { recursive: true });
+  await fs.writeFile(path.join(OUTPUT_DIR, 'books.json'), JSON.stringify(good, null, 2));
+  await fs.writeFile(path.join(OUTPUT_DIR, 'errors.json'), JSON.stringify(bad, null, 2));
+
+  console.log('Saved to output/');
 }
 
 main().catch(console.error);
