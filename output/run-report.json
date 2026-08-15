@@ -1,0 +1,16 @@
+{
+  "start_time": "2026-08-15T05:36:00.782Z",
+  "pages_fetched": 63,
+  "cache_hits": 0,
+  "valid_records": 60,
+  "invalid_records": 0,
+  "failed_pages": 1,
+  "errors": [
+    {
+      "url": "https://books.toscrape.com/catalogue/nonexistent_9999/index.html",
+      "error": "HTTP 404 for https://books.toscrape.com/catalogue/nonexistent_9999/index.html"
+    }
+  ],
+  "end_time": "2026-08-15T05:36:46.618Z",
+  "duration_seconds": 45.836
+}

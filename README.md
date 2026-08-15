@@ -52,7 +52,24 @@ The final output (`books.json`) will contain an array of objects matching this s
 This scraper does not handle JavaScript-rendered content because the data is already in the HTML.
 
 ## Run Report Sample
-*(To be populated after a successful run)*
+```json
+{
+  "start_time": "2026-08-15T05:36:00.782Z",
+  "pages_fetched": 63,
+  "cache_hits": 0,
+  "valid_records": 60,
+  "invalid_records": 0,
+  "failed_pages": 1,
+  "errors": [
+    {
+      "url": "https://books.toscrape.com/catalogue/nonexistent_9999/index.html",
+      "error": "HTTP 404 for https://books.toscrape.com/catalogue/nonexistent_9999/index.html"
+    }
+  ],
+  "end_time": "2026-08-15T05:36:46.618Z",
+  "duration_seconds": 45.836
+}
+```
 
 ## Note on Ethics
 Always use official APIs when available, never bypass paywalls or logins, and collect only what you need. Scraping should be respectful to the host servers.
