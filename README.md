@@ -1,4 +1,4 @@
-# The Polite Scraper (FlyRank Internship A9)
+# The Polite Scraper
 
 A polite, resilient, and validated web scraper that extracts book data from the Books to Scrape sandbox.
 
@@ -37,7 +37,7 @@ The final output (`books.json`) will contain an array of objects matching this s
 - `fetched_at` (string, ISO datetime)
 
 ## Politeness Rules
-- **User-Agent:** Identifies as `FlyRankInternshipA9/1.0 (+https://github.com/your-repo)`
+- **User-Agent:** Identifies as `PoliteScraper/1.0 (+https://github.com/SKKammar/PoliteScraper)`
 - **Delay:** Waits at least 500ms between real requests.
 - **Timeout:** 10,000ms timeout per request.
 - **Caching:** Caches HTML to avoid hammering the site during development.
