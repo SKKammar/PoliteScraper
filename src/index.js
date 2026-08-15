@@ -4,11 +4,23 @@ import { fetchWithCache } from './fetch.js';
 import { extractBookLinks, getNextPageUrl, extractBookDetails } from './parse.js';
 import { normalizeRecord } from './normalize.js';
 import { validateBook } from './validate.js';
+import { writeReport } from './report.js';
 import { BASE_URL, DELAY_MS, OUTPUT_DIR } from './config.js';
 
 async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function main() {
+  const startTime = new Date();
+  const report = {
+    start_time: startTime.toISOString(),
+    pages_fetched: 0,
+    cache_hits: 0, 
+    valid_records: 0,
+    invalid_records: 0,
+    failed_pages: 0,
+    errors: []
+  };
+
   const allBookUrls = new Set();
   let currentPageUrl = `${BASE_URL}/catalogue/page-1.html`;
   let pageNum = 1;
@@ -19,8 +31,11 @@ async function main() {
     let html;
     try {
       html = await fetchWithCache(currentPageUrl, cacheKey);
+      report.pages_fetched++;
     } catch (err) {
       console.error(`Failed to fetch catalogue page ${pageNum}:`, err.message);
+      report.failed_pages++;
+      report.errors.push({ url: currentPageUrl, error: err.message });
       break;
     }
 
@@ -35,7 +50,8 @@ async function main() {
     }
   }
 
-  console.log(`catalogue_pages=${pageNum - 1}, discovered=${allBookUrls.size}, unique_urls=${allBookUrls.size}`);
+  // deliberately add a fake book URL to prove failure handling
+  allBookUrls.add('https://books.toscrape.com/catalogue/nonexistent_9999/index.html');
 
   // 2. Fetch details
   const rawRecords = [];
@@ -47,8 +63,11 @@ async function main() {
     let html;
     try {
       html = await fetchWithCache(url, cacheKey);
+      report.pages_fetched++;
     } catch (err) {
       console.error(`Failed to fetch book ${url}:`, err.message);
+      report.failed_pages++;
+      report.errors.push({ url, error: err.message });
       continue;
     }
     
@@ -59,8 +78,6 @@ async function main() {
     await delay(DELAY_MS);
   }
   
-  console.log(`detail_pages=${rawRecords.length}`);
-
   // 3. Normalize and validate
   const good = [];
   const bad = [];
@@ -69,19 +86,25 @@ async function main() {
     const result = validateBook(normalized);
     if (result.valid) {
       good.push(result.data);
+      report.valid_records++;
     } else {
       bad.push({ raw, errors: result.error });
+      report.invalid_records++;
     }
   }
-
-  console.log(`Validation results: ${good.length} valid, ${bad.length} invalid.`);
 
   // 4. Write outputs
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
   await fs.writeFile(path.join(OUTPUT_DIR, 'books.json'), JSON.stringify(good, null, 2));
   await fs.writeFile(path.join(OUTPUT_DIR, 'errors.json'), JSON.stringify(bad, null, 2));
 
-  console.log('Saved to output/');
+  // 5. Write run report
+  const endTime = new Date();
+  report.end_time = endTime.toISOString();
+  report.duration_seconds = (endTime.getTime() - startTime.getTime()) / 1000;
+  await writeReport(report);
+
+  console.log(`Scraping finished. Valid records: ${report.valid_records}, Failed pages: ${report.failed_pages}`);
 }
 
 main().catch(console.error);
