@@ -19,3 +19,23 @@ export function getNextPageUrl(html, currentUrl) {
   if (!next) return null;
   return new URL(next, currentUrl).href;
 }
+
+export function extractBookDetails(html, productUrl, sourcePage) {
+  const $ = cheerio.load(html);
+  const title = $('div.product_main h1').text().trim();
+  const price_text = $('p.price_color').text().trim();
+  const availability_text = $('p.instock.availability').text().trim();
+  const ratingClass = $('p.star-rating').attr('class') || '';
+  const rating_text = ratingClass.replace('star-rating ', '').trim();
+  const description = $('div#product_description ~ p').text().trim() || null;
+  return {
+    title,
+    product_url: productUrl,
+    price_text,
+    availability_text,
+    rating_text: rating_text || 'Unknown',
+    description,
+    source_page: sourcePage,
+    fetched_at: new Date().toISOString()
+  };
+}
